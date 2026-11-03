@@ -14,6 +14,11 @@ rationale: LTS runtime of the CLI.
 license: MIT
 last_review: 2026-11-03
 review_interval_months: 12
+relations:
+  - type: used-by
+    target: ADR-0002
+    why: the validator runs on Node.js
+    link: ../adr/0002-store-documents-as-markdown-with-checked-frontmatter.md
 ---
 ## Use
 
