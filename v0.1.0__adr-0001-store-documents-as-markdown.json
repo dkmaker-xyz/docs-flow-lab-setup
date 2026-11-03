@@ -2,7 +2,7 @@
   "schema": 1,
   "branch": "v0.1.0/adr-0001-store-documents-as-markdown",
   "sourceSha": "ee3035c78bb51e059d5ad6406b3e9ddfafb03139",
-  "generatedAt": "2026-11-03T08:40:19.793Z",
+  "generatedAt": "2026-11-03T08:40:39.067Z",
   "base": "main",
   "documents": [
     {
