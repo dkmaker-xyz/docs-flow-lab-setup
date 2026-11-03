@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/dist/index.js",
+              "hook",
+              "session-start"
+            ],
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

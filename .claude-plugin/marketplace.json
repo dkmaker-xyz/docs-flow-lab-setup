@@ -1,0 +1,14 @@
+{
+  "name": "idc365-decisions",
+  "owner": {
+    "name": "dkmaker-xyz"
+  },
+  "description": "The idc365-decisions plugin for dkmaker-xyz/docs-flow-lab-setup: CLI, SessionStart priming and agent instructions.",
+  "plugins": [
+    {
+      "name": "idc365-decisions",
+      "source": "./plugin",
+      "description": "Decisions, procedures, tech stack and releases from the documentation repository: CLI, session priming and the setup skill."
+    }
+  ]
+}

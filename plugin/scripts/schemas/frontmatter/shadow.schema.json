@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:idc365-decisions:frontmatter:shadow",
+  "title": "Shadow document frontmatter",
+  "type": "object",
+  "$ref": "urn:idc365-decisions:frontmatter:common",
+  "unevaluatedProperties": false,
+  "properties": {
+    "placeholder": {
+      "description": "Placeholder for an undocumented code file: only relations, no other fields.",
+      "const": true
+    }
+  },
+  "if": {
+    "required": [
+      "placeholder"
+    ]
+  },
+  "then": {
+    "type": "object",
+    "required": [
+      "relations"
+    ],
+    "propertyNames": {
+      "enum": [
+        "placeholder",
+        "relations"
+      ]
+    }
+  },
+  "else": {
+    "required": [
+      "title",
+      "description",
+      "intent",
+      "when",
+      "state"
+    ]
+  }
+}

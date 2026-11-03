@@ -1,0 +1,9 @@
+{
+  "name": "idc365-decisions",
+  "displayName": "IDC365 decisions",
+  "version": "0.1.1",
+  "description": "CLI, session priming and instructions for the idc365-decisions documentation system.",
+  "author": {
+    "name": "dkmaker-xyz"
+  }
+}

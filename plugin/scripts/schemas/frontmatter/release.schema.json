@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:idc365-decisions:frontmatter:release",
+  "title": "Release frontmatter",
+  "type": "object",
+  "$ref": "urn:idc365-decisions:frontmatter:common",
+  "required": [
+    "id",
+    "title",
+    "description",
+    "intent",
+    "when",
+    "state",
+    "version",
+    "phase",
+    "docs_branch"
+  ],
+  "unevaluatedProperties": false,
+  "properties": {
+    "id": {
+      "description": "Permanent ID: REL-NNNN matching the file number.",
+      "type": "string",
+      "pattern": "^REL-[0-9]{4,}$"
+    },
+    "version": {
+      "description": "Product version, full vMAJOR.MINOR.PATCH.",
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "phase": {
+      "description": "Release phase.",
+      "enum": [
+        "planned",
+        "development",
+        "released",
+        "retired"
+      ]
+    },
+    "docs_branch": {
+      "description": "Documentation branch: main or release/vMAJOR.MINOR.PATCH.",
+      "type": "string",
+      "pattern": "^(main|release/v[0-9]+\\.[0-9]+\\.[0-9]+)$"
+    },
+    "code": {
+      "description": "Code mapping per repository.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "repo",
+          "branch"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "repo": {
+            "description": "Code repository as org/repo.",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$"
+          },
+          "branch": {
+            "description": "Long-lived code branch.",
+            "type": "string",
+            "minLength": 1
+          },
+          "tag": {
+            "description": "Code tag at release.",
+            "type": "string",
+            "minLength": 1
+          },
+          "commit": {
+            "description": "Code commit at release (40 hex).",
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$"
+          }
+        }
+      }
+    },
+    "jira_fix_version": {
+      "description": "Jira fix version.",
+      "type": "string",
+      "minLength": 1
+    },
+    "planned_date": {
+      "$ref": "urn:idc365-decisions:frontmatter:common#/$defs/date"
+    },
+    "released_date": {
+      "$ref": "urn:idc365-decisions:frontmatter:common#/$defs/date"
+    },
+    "patches": {
+      "description": "Patch versions released on top of this release, vMAJOR.MINOR.PATCH.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+      }
+    }
+  }
+}
