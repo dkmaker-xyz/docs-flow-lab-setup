@@ -1,7 +1,7 @@
 {
   "ADR": 1,
   "PROC": 0,
-  "TECH": 0,
+  "TECH": 1,
   "REL": 0,
   "ATT": 0
 }
