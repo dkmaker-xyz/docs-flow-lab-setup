@@ -1,0 +1,2 @@
+# Minimum age in days of a package version before it may be used (spec 5.3).
+cooldown_days: 3

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:idc365-decisions:frontmatter:adr",
+  "title": "ADR frontmatter",
+  "type": "object",
+  "$ref": "urn:idc365-decisions:frontmatter:common",
+  "required": [
+    "id",
+    "title",
+    "description",
+    "intent",
+    "when",
+    "state",
+    "category"
+  ],
+  "unevaluatedProperties": false,
+  "properties": {
+    "id": {
+      "description": "Permanent ID: ADR-NNNN matching the file number.",
+      "type": "string",
+      "pattern": "^ADR-[0-9]{4,}$"
+    },
+    "category": {
+      "description": "Category from config/categories.yaml.",
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

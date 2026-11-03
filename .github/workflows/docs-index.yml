@@ -1,0 +1,118 @@
+name: Documentation index
+
+# Rebuilds the index of a documentation branch on meta/index (spec 6.2, 7.5)
+# after every push. docs-index-remove.yml removes it when the branch is deleted.
+#
+# Security design:
+# - Pushes start the unprivileged "Documentation index trigger" workflow.
+#   This workflow reacts to it with `workflow_run`, which GitHub runs from
+#   the default branch, so a pushed branch can never change the workflow
+#   that holds the bot key.
+# - A manual rebuild (`workflow_dispatch`, input `branch`) runs only when
+#   started from main, with the same environment and steps.
+# - The branch head is checked out as data only: no npm ci and no scripts
+#   from it. The CLI is built from main's cli/, so only reviewed code runs
+#   with the bot token.
+# - The bot's private key lives in the `bot` environment, whose deployment
+#   branches are limited to main; a job started from any other ref cannot
+#   read it. BOT_CLIENT_ID (the App's client ID) is a repository variable.
+# - Actions are pinned to commit SHAs (tag in the comment) so a moved tag can
+#   never change what runs with the bot token.
+
+on:
+  workflow_run:
+    workflows: ["Documentation index trigger"]
+    types: [completed]
+  # Manual rebuild of one branch's index, started from main.
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Documentation branch to rebuild the index for
+        required: true
+        default: main
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  build:
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-24.04
+    environment: bot
+    # One build per branch at a time; a newer one cancels an older one.
+    # Trigger runs can complete out of order, so a build never uses the SHA of
+    # the event that started it: it builds the branch head at the time it
+    # runs, which makes the last build always index the latest commit.
+    # Cancelling is safe because publishing is a single write, and publish
+    # writes only when the index's commit is still the branch head. Removes
+    # use their own group, so a build can never cancel a remove.
+    concurrency:
+      group: docs-index-build-${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.event.workflow_run.head_branch }}
+      cancel-in-progress: true
+    steps:
+      - name: Current branch head
+        id: head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.event.workflow_run.head_branch }}
+        run: |
+          # gh prints the error body on stdout for a 404, so accept only a commit SHA.
+          sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$BRANCH" --jq .object.sha 2>/dev/null) || sha=""
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || sha=""
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          if [ -z "$sha" ]; then echo "$BRANCH is not a branch (a v* tag, or deleted; a deleted branch's index is removed by the remove workflow)."; fi
+
+      - name: CLI from main
+        if: steps.head.outputs.sha != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: _cli
+          sparse-checkout: cli
+          persist-credentials: false
+
+      - if: steps.head.outputs.sha != ''
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Build the CLI
+        if: steps.head.outputs.sha != ''
+        working-directory: _cli/cli
+        run: npm ci && npm run build
+
+      - name: Branch head as data, with history, branches and tags
+        if: steps.head.outputs.sha != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.head.outputs.sha }}
+          path: docs
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Build the index
+        if: steps.head.outputs.sha != ''
+        working-directory: docs
+        env:
+          # Read-only lookups (who merged a commit's PR) use the workflow token.
+          IDC365_DECISIONS_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.event.workflow_run.head_branch }}
+        run: node ../_cli/cli/dist/index.js index build --branch "$BRANCH" --out "$RUNNER_TEMP/index.json"
+
+      - name: Bot token
+        if: steps.head.outputs.sha != ''
+        id: bot
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.BOT_CLIENT_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Publish the index
+        if: steps.head.outputs.sha != ''
+        env:
+          IDC365_DECISIONS_TOKEN: ${{ steps.bot.outputs.token }}
+        run: node _cli/cli/dist/index.js index publish "$RUNNER_TEMP/index.json"

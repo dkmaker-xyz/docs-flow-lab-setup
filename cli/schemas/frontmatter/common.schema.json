@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:idc365-decisions:frontmatter:common",
+  "title": "Shared frontmatter fields",
+  "description": "Fields every document type shares (spec 3.2). Type schemas add id, category and their own fields, list what is required and reject unknown fields.",
+  "type": "object",
+  "properties": {
+    "title": {
+      "description": "Human title.",
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "description": "Human description.",
+      "type": "string",
+      "minLength": 1
+    },
+    "intent": {
+      "description": "AI-facing, at most 200 characters: why another agent should read this.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "when": {
+      "description": "AI-facing: when the document is relevant.",
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "description": "Target state once merged.",
+      "enum": [
+        "draft",
+        "proposed",
+        "accepted",
+        "deprecated",
+        "superseded"
+      ]
+    },
+    "relations": {
+      "description": "Relations to other documents, Jira or URLs.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relation"
+      }
+    },
+    "featured": {
+      "description": "Inject the full body at session start.",
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "$defs": {
+    "relation": {
+      "type": "object",
+      "required": [
+        "type",
+        "target",
+        "why",
+        "link"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "description": "Relation type. Forward types are written by authors; inverse types (superseded-by, amended-by, depended-on-by, implemented-by, used-by, attached-to) only by the bot. relates-to is its own inverse.",
+          "enum": [
+            "supersedes",
+            "amends",
+            "depends-on",
+            "implements",
+            "uses",
+            "relates-to",
+            "attachment",
+            "superseded-by",
+            "amended-by",
+            "depended-on-by",
+            "implemented-by",
+            "used-by",
+            "attached-to"
+          ]
+        },
+        "target": {
+          "description": "ADR-0001, PROC-0001, TECH-0001, REL-0001, ATT-0001, CODE:org/repo/path, JIRA:KEY-123 or an http(s) URL.",
+          "type": "string",
+          "pattern": "^((ADR|PROC|TECH|REL|ATT)-[0-9]{4,}|CODE:[A-Za-z0-9-]+/[A-Za-z0-9._-]+(/[^\\s]+)?|JIRA:[A-Z][A-Z0-9_]*-[0-9]+|https?://\\S+)$"
+        },
+        "why": {
+          "description": "Why the relation exists. Required.",
+          "type": "string",
+          "minLength": 1
+        },
+        "link": {
+          "description": "Resolved link: relative path to the target file, or the URL for JIRA and external targets.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "date": {
+      "description": "Date as YYYY-MM-DD.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    }
+  }
+}

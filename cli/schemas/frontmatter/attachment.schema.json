@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:idc365-decisions:frontmatter:attachment",
+  "title": "Attachment frontmatter",
+  "type": "object",
+  "$ref": "urn:idc365-decisions:frontmatter:common",
+  "required": [
+    "id",
+    "title",
+    "description",
+    "intent",
+    "when",
+    "state",
+    "media_type",
+    "size",
+    "sha256"
+  ],
+  "unevaluatedProperties": false,
+  "properties": {
+    "id": {
+      "description": "Permanent ID: ATT-NNNN matching the file number.",
+      "type": "string",
+      "pattern": "^ATT-[0-9]{4,}$"
+    },
+    "media_type": {
+      "description": "Media type of the binary, as configured for its extension.",
+      "type": "string",
+      "minLength": 1
+    },
+    "size": {
+      "description": "Size of the binary in bytes.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "sha256": {
+      "description": "SHA-256 of the binary, 64 lowercase hex.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

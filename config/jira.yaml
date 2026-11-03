@@ -1,0 +1,3 @@
+# Base URL a Jira key is appended to, ending with a slash (spec 4.2).
+# null until configured: JIRA relations fail validation while it is null.
+jira_base_url: null

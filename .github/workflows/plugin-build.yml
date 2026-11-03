@@ -1,0 +1,107 @@
+name: Claude Code plugin
+
+# Builds the idc365-decisions Claude Code plugin (phase 10) and commits it to
+# the `meta/plugin` branch, which is the marketplace users add:
+#   /plugin marketplace add <org>/<repo>#meta/plugin
+# The plugin is the CLI built from cli/ plus the templates in plugin/
+# (skill, README), assembled by cli/dist/plugin/assemble.js.
+#
+# Only reviewed code is shipped: the workflow runs on push to main (cli/ and
+# plugin/ only change there through merged PRs) and builds from the pushed
+# commit. Only the bot may write meta/plugin (ruleset "meta-plugin"); its key
+# comes from the `bot` environment (deployment branches: main and release/*).
+# Version: <major>.<minor> from cli/package.json + the run number, so every
+# build is a new plugin version and Claude Code picks it up on update.
+# Actions are pinned to commit SHAs (tag in the comment).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cli/**"
+      - "plugin/**"
+      - ".github/workflows/plugin-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: bot
+    steps:
+      - name: Pushed commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Build the CLI
+        working-directory: cli
+        run: |
+          npm ci
+          npm run build
+          node dist/index.js | grep -q "## Next action"
+
+      - name: Assemble the plugin
+        id: assemble
+        env:
+          REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          RUN: ${{ github.run_number }}
+        run: |
+          base=$(node -p "require('./cli/package.json').version.split('.').slice(0,2).join('.')")
+          version="${base}.${RUN}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          node cli/dist/plugin/assemble.js . "$RUNNER_TEMP/plugin" "$REPOSITORY" "$version" "$SHA"
+
+      - name: Smoke test the assembled plugin
+        working-directory: ${{ runner.temp }}/plugin/plugin
+        run: |
+          # The same frozen, script-free install Claude Code runs when it caches the plugin.
+          npm ci --ignore-scripts --no-audit --no-fund
+          ./bin/idc365-decisions | grep -q "## Next action"
+          echo '{}' | node scripts/dist/index.js hook session-start | grep -q '"hookEventName":"SessionStart"'
+          rm -rf node_modules
+
+      - name: Bot token
+        id: bot
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.BOT_CLIENT_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Commit to meta/plugin
+        env:
+          TOKEN: ${{ steps.bot.outputs.token }}
+          SLUG: ${{ steps.bot.outputs.app-slug }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ steps.assemble.outputs.version }}
+          SHA: ${{ github.sha }}
+        working-directory: ${{ runner.temp }}/plugin
+        run: |
+          git init -q -b meta/plugin
+          git config user.name "${SLUG}[bot]"
+          git config user.email "${SLUG}[bot]@users.noreply.github.com"
+          auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)"
+          url="https://github.com/${REPOSITORY}.git"
+          # Keep the branch history: the new tree becomes a child of the current head.
+          if git -c http.extraheader="$auth" fetch -q --depth=1 "$url" meta/plugin; then
+            git reset -q --soft FETCH_HEAD
+          fi
+          git add -A
+          git update-index --chmod=+x plugin/bin/idc365-decisions
+          git commit -q -m "Plugin ${VERSION} from main ${SHA}"
+          git -c http.extraheader="$auth" push -q "$url" HEAD:refs/heads/meta/plugin
+          echo "Plugin ${VERSION} committed to meta/plugin ($(git rev-parse --short HEAD))" | tee -a "$GITHUB_STEP_SUMMARY"

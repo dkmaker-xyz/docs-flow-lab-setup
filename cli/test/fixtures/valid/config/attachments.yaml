@@ -1,0 +1,12 @@
+# Allowed attachment types (extension: media type) and the maximum size (spec 5.5).
+attachment_types:
+  png: image/png
+  jpg: image/jpeg
+  webp: image/webp
+  pdf: application/pdf
+  svg: image/svg+xml
+  docx: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+  xlsx: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  pptx: application/vnd.openxmlformats-officedocument.presentationml.presentation
+# 25 MB = 25 * 1024 * 1024 bytes
+attachment_max_bytes: 26214400

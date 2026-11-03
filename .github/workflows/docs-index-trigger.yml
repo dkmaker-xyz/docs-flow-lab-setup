@@ -1,0 +1,27 @@
+name: Documentation index trigger
+
+# Unprivileged trigger for the index (spec 6.2, 7.5) and the HTML site
+# (docs-site.yml, phase 11; v* tags are rendered too). A push workflow runs the
+# workflow file from the pushed branch, so this one has no permissions and no
+# secrets and only marks the push. The privileged work happens in
+# docs-index.yml on `workflow_run`, which GitHub always runs from the default
+# branch.
+
+on:
+  push:
+    branches-ignore:
+      - "meta/**"
+    tags:
+      - "v*"
+
+permissions: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Mark the push
+        env:
+          REF: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+        run: echo "Index and site rebuild requested for $REF at $SHA"

@@ -1,0 +1,171 @@
+name: Documentation site
+
+# Renders the documentation to static HTML on meta/site (phase 11), one folder
+# per truth branch (main, release/vX.Y.Z) and per vX.Y.Z tag, for the local
+# viewer `idc365-decisions view`. A deleted release branch loses its folder.
+#
+# A separate workflow rather than a job in docs-index.yml: it renders only
+# truth branches and tags (the index covers every branch), so it has its own
+# conditions, its own concurrency groups and its own failures, and a site
+# problem never blocks the index.
+#
+# Security design (as docs-index.yml):
+# - Pushes start the unprivileged "Documentation index trigger" (branches and
+#   v* tags). This workflow reacts with `workflow_run`, which GitHub runs from
+#   the default branch, so a pushed ref can never change the workflow that
+#   holds the bot key.
+# - A manual render (`workflow_dispatch`, input `ref`) runs only from main.
+# - The ref is checked out as data only: no npm ci and no scripts from it.
+#   The CLI is built from main's cli/, so only reviewed code runs with the
+#   bot token.
+# - The bot key lives in the `bot` environment (deployment branches: main and
+#   release/*); BOT_CLIENT_ID is a repository variable. Only the bot may
+#   create, update or delete meta/site (ruleset "meta-site").
+# - Actions are pinned to commit SHAs (tag in the comment).
+#
+# Builds use one concurrency group per ref (a newer build cancels an older
+# one) and render the ref's head at the time they run; publish writes only
+# while that commit is still the head. Removes have their own group and are
+# never cancelled.
+
+on:
+  workflow_run:
+    workflows: ["Documentation index trigger"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch (main, release/vX.Y.Z) or tag (vX.Y.Z) to render
+        required: true
+        default: main
+  delete:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' &&
+        (github.event.workflow_run.head_branch == 'main' || startsWith(github.event.workflow_run.head_branch, 'release/v') || startsWith(github.event.workflow_run.head_branch, 'v'))) ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-24.04
+    environment: bot
+    concurrency:
+      group: docs-site-build-${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.event.workflow_run.head_branch }}
+      cancel-in-progress: true
+    steps:
+      - name: Ref and its current commit
+        id: ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.event.workflow_run.head_branch }}
+        run: |
+          kind=""; sha=""
+          if [[ "$NAME" =~ ^(main|release/v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            kind=branch
+            sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$NAME" --jq .object.sha 2>/dev/null) || sha=""
+          elif [[ "$NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            kind=tag
+            obj=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$NAME" --jq '.object.type + " " + .object.sha' 2>/dev/null) || obj=""
+            if [[ "$obj" == "tag "* ]]; then
+              sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/${obj#tag }" --jq .object.sha 2>/dev/null) || sha=""
+            else
+              sha="${obj#commit }"
+            fi
+          fi
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || sha=""
+          echo "kind=$kind" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          if [ -z "$sha" ]; then echo "$NAME is not a site ref or no longer exists; nothing to render."; fi
+
+      - name: CLI from main
+        if: steps.ref.outputs.sha != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: _cli
+          sparse-checkout: cli
+          persist-credentials: false
+
+      - if: steps.ref.outputs.sha != ''
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Build the CLI
+        if: steps.ref.outputs.sha != ''
+        working-directory: _cli/cli
+        run: npm ci && npm run build
+
+      - name: Ref as data, with history
+        if: steps.ref.outputs.sha != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.ref.outputs.sha }}
+          path: docs
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Render
+        if: steps.ref.outputs.sha != ''
+        working-directory: docs
+        env:
+          NAME: ${{ steps.ref.outputs.name }}
+          KIND: ${{ steps.ref.outputs.kind }}
+        run: node ../_cli/cli/dist/index.js site build --ref "$NAME" --kind "$KIND" --repository "$GITHUB_REPOSITORY" --out "$RUNNER_TEMP/site"
+
+      - name: Bot token
+        if: steps.ref.outputs.sha != ''
+        id: bot
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.BOT_CLIENT_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Publish to meta/site
+        if: steps.ref.outputs.sha != ''
+        env:
+          IDC365_DECISIONS_TOKEN: ${{ steps.bot.outputs.token }}
+        run: node _cli/cli/dist/index.js site publish "$RUNNER_TEMP/site" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  remove:
+    # Only release branches are deleted (main and tags are protected); meta/* has no site.
+    if: github.event_name == 'delete' && github.event.ref_type == 'branch' && startsWith(github.event.ref, 'release/v')
+    runs-on: ubuntu-24.04
+    environment: bot
+    concurrency:
+      group: docs-site-remove-${{ github.event.ref }}
+      cancel-in-progress: false
+    steps:
+      - name: CLI from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: _cli
+          sparse-checkout: cli
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Build the CLI
+        working-directory: _cli/cli
+        run: npm ci && npm run build
+
+      - name: Bot token
+        id: bot
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.BOT_CLIENT_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Remove the folder
+        env:
+          IDC365_DECISIONS_TOKEN: ${{ steps.bot.outputs.token }}
+          REF: ${{ github.event.ref }}
+        run: node _cli/cli/dist/index.js site delete --ref "$REF" | tee -a "$GITHUB_STEP_SUMMARY"

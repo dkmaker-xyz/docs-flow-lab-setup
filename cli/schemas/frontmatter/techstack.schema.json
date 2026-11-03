@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:idc365-decisions:frontmatter:techstack",
+  "title": "Tech stack frontmatter",
+  "type": "object",
+  "$ref": "urn:idc365-decisions:frontmatter:common",
+  "required": [
+    "id",
+    "title",
+    "description",
+    "intent",
+    "when",
+    "state",
+    "category",
+    "ecosystem",
+    "packages",
+    "rationale",
+    "license",
+    "last_review",
+    "review_interval_months"
+  ],
+  "unevaluatedProperties": false,
+  "properties": {
+    "id": {
+      "description": "Permanent ID: TECH-NNNN matching the file number.",
+      "type": "string",
+      "pattern": "^TECH-[0-9]{4,}$"
+    },
+    "category": {
+      "description": "Category from config/categories.yaml.",
+      "type": "string",
+      "minLength": 1
+    },
+    "ecosystem": {
+      "description": "Where the packages come from.",
+      "enum": [
+        "npm",
+        "maven",
+        "docker",
+        "github-actions",
+        "runtime",
+        "service"
+      ]
+    },
+    "version": {
+      "description": "Version range for the whole component (a BOM); its packages then carry no own version. Semver with wildcards, e.g. 3.*, 3.2.*, 3.2.1.",
+      "$ref": "#/$defs/versionRange"
+    },
+    "packages": {
+      "description": "Exact package identifiers the component covers.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "description": "Package identifier, e.g. react, org.springframework.boot:spring-boot-starter-web, node, actions/checkout.",
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "description": "Allowed version range, semver with wildcards, e.g. 19.*, 19.2.*.",
+            "$ref": "#/$defs/versionRange"
+          }
+        }
+      }
+    },
+    "rationale": {
+      "description": "Positive rationale: why this component is used.",
+      "type": "string",
+      "minLength": 1
+    },
+    "docs": {
+      "description": "Reference to the official documentation (filled later from the docs repository).",
+      "type": "string",
+      "minLength": 1
+    },
+    "license": {
+      "description": "Licence, e.g. MIT.",
+      "type": "string",
+      "minLength": 1
+    },
+    "last_review": {
+      "$ref": "urn:idc365-decisions:frontmatter:common#/$defs/date"
+    },
+    "review_interval_months": {
+      "description": "Months between reviews.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "cooldown_exemptions": {
+      "description": "Temporary exemptions from the cooldown (spec 5.3): one entry per package version, with the CVE that requires it and the last day it applies.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "package",
+          "version",
+          "cve",
+          "until"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "package": {
+            "description": "Package identifier as listed in packages.",
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "description": "Exact version that is exempted.",
+            "type": "string",
+            "minLength": 1
+          },
+          "cve": {
+            "description": "The CVE that requires the new version, e.g. CVE-2026-12345.",
+            "type": "string",
+            "pattern": "^CVE-[0-9]{4}-[0-9]{4,}$"
+          },
+          "until": {
+            "description": "Last day the exemption applies (YYYY-MM-DD).",
+            "$ref": "urn:idc365-decisions:frontmatter:common#/$defs/date"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "versionRange": {
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+(\\.([0-9]+|\\*))?|\\.\\*)?$"
+    }
+  },
+  "allOf": [
+    {
+      "description": "Without a component-level version (BOM), every package needs its own version range; services have no versions.",
+      "if": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "version"
+              ]
+            },
+            {
+              "properties": {
+                "ecosystem": {
+                  "const": "service"
+                }
+              },
+              "required": [
+                "ecosystem"
+              ]
+            }
+          ]
+        }
+      },
+      "then": {
+        "properties": {
+          "packages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "version"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

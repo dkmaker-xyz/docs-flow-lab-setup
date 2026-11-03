@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:idc365-decisions:config",
+  "title": "idc365-decisions configuration",
+  "description": "The merged content of every config/*.yaml file in the documentation repository. Each top-level key may appear in only one file.",
+  "type": "object",
+  "required": [
+    "categories",
+    "attachment_types",
+    "attachment_max_bytes",
+    "repositories",
+    "jira_base_url",
+    "priming_budget",
+    "cooldown_days"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "categories": {
+      "description": "Category lists per type: a map from category name to its human description and AI `when`.",
+      "type": "object",
+      "required": ["adr", "procedure", "techstack"],
+      "additionalProperties": false,
+      "properties": {
+        "adr": { "$ref": "#/$defs/categoryList" },
+        "procedure": { "$ref": "#/$defs/categoryList" },
+        "techstack": { "$ref": "#/$defs/categoryList" }
+      }
+    },
+    "attachment_types": {
+      "description": "Allowed attachment file extensions (lowercase, without dot) mapped to their media type.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z0-9]+$" },
+      "additionalProperties": { "type": "string", "pattern": "^[a-z]+/[a-zA-Z0-9.+-]+$" }
+    },
+    "attachment_max_bytes": {
+      "description": "Maximum size of one attachment binary in bytes.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "repositories": {
+      "description": "Code repositories that may have shadow documents, as org/repo.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$" }
+    },
+    "jira_base_url": {
+      "description": "Base URL a Jira key is appended to, ending with a slash, for example https://example.atlassian.net/browse/. null while not configured.",
+      "oneOf": [
+        { "type": "string", "pattern": "^https://\\S+/$" },
+        { "type": "null" }
+      ]
+    },
+    "priming_budget": {
+      "description": "Maximum characters of SessionStart priming: fixed text plus the bodies of all featured documents.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "cooldown_days": {
+      "description": "Minimum age in days of a package version before it may be used.",
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$defs": {
+    "categoryList": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["description", "when"],
+        "additionalProperties": false,
+        "properties": {
+          "description": { "description": "Human description of the category.", "type": "string", "minLength": 1 },
+          "when": { "description": "AI-facing: when a document belongs in this category.", "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "_comment": "meta/ids: the ID counters. Developers' CLIs update counters.json (no update rule); the setup script creates the branch before this ruleset; no deletion or force push.",
+  "name": "meta-ids",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": [
+        "refs/heads/meta/ids"
+      ],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "creation"
+    },
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward"
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": "${BOT_APP_ID}",
+      "actor_type": "Integration",
+      "bypass_mode": "always"
+    }
+  ]
+}

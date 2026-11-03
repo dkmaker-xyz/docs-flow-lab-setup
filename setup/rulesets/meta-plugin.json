@@ -1,0 +1,35 @@
+{
+  "_comment": "meta/plugin: written only by the bot (workflow); nobody else creates, updates or deletes it.",
+  "name": "meta-plugin",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": [
+        "refs/heads/meta/plugin"
+      ],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "creation"
+    },
+    {
+      "type": "update"
+    },
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward"
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": "${BOT_APP_ID}",
+      "actor_type": "Integration",
+      "bypass_mode": "always"
+    }
+  ]
+}

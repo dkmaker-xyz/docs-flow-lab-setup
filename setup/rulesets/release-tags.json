@@ -1,0 +1,32 @@
+{
+  "_comment": "v* tags: only the bot creates them, after a release PR is merged; nobody moves or deletes them.",
+  "name": "release-tags",
+  "target": "tag",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": [
+        "refs/tags/v*"
+      ],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "creation"
+    },
+    {
+      "type": "update"
+    },
+    {
+      "type": "deletion"
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": "${BOT_APP_ID}",
+      "actor_type": "Integration",
+      "bypass_mode": "always"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+name: Documentation validation
+
+# The validation check on pull requests to truth branches (spec 7.4, 7.5):
+# the full validator over the PR's documentation tree. Required by the
+# truth-branches ruleset as the check `validate`.
+#
+# Why `pull_request_target`: GitHub takes this workflow file from the base
+# branch, so a PR cannot change how it is validated by editing this file.
+# It is safe to run on PR content because:
+# - the token is read-only (`permissions: contents: read`);
+# - no secrets and no environment are used;
+# - the CLI is built from the base commit's cli/, never from the PR;
+# - the PR head is checked out as data only, with `persist-credentials:
+#   false`, and nothing from it is executed (no npm ci, no scripts): the
+#   validator only reads its files.
+
+on:
+  pull_request_target:
+    branches:
+      - main
+      - "release/*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-validate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-24.04
+    steps:
+      - name: CLI from the base branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: _cli
+          sparse-checkout: cli
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Build the CLI
+        working-directory: _cli/cli
+        run: npm ci && npm run build
+
+      - name: PR head as data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: docs
+          persist-credentials: false
+
+      - name: Validate
+        run: |
+          set +e
+          node _cli/cli/dist/index.js validate docs > "$RUNNER_TEMP/validate.md"
+          code=$?
+          set -e
+          cat "$RUNNER_TEMP/validate.md" >> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/validate.md"
+          exit "$code"

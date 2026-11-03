@@ -1,0 +1,60 @@
+name: Documentation index remove
+
+# Removes the index of a deleted documentation branch from meta/index
+# (spec 6.2, 7.5).
+#
+# `delete` always runs from the default branch, the CLI is built from main's
+# cli/, and the bot's private key comes from the `bot` environment (deployment
+# branches: main only). BOT_CLIENT_ID (the App's client ID) is a repository
+# variable. Actions are pinned to commit SHAs (tag in the comment).
+#
+# A remove is never cancelled: it has its own concurrency group per branch
+# name, separate from the builds. A build that races with a delete does not
+# leave an orphan either: publish skips a missing branch and removes the file
+# again if the branch disappears while it writes.
+
+on:
+  delete:
+
+permissions:
+  contents: read
+
+jobs:
+  remove:
+    # Tags and meta/* branches have no index (and are protected against deletion).
+    if: github.event.ref_type == 'branch' && !startsWith(github.event.ref, 'meta/')
+    runs-on: ubuntu-24.04
+    environment: bot
+    concurrency:
+      group: docs-index-remove-${{ github.event.ref }}
+      cancel-in-progress: false
+    steps:
+      - name: CLI from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: _cli
+          sparse-checkout: cli
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Build the CLI
+        working-directory: _cli/cli
+        run: npm ci && npm run build
+
+      - name: Bot token
+        id: bot
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.BOT_CLIENT_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Remove the index
+        env:
+          IDC365_DECISIONS_TOKEN: ${{ steps.bot.outputs.token }}
+          BRANCH: ${{ github.event.ref }}
+        run: node _cli/cli/dist/index.js index delete --branch "$BRANCH"

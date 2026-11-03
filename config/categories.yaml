@@ -1,0 +1,57 @@
+# Category lists per document type (spec 5.1–5.3).
+# description: for humans. when: for AI agents, to pick the category.
+categories:
+  adr:
+    architecture:
+      description: "System structure: modules, layers and responsibilities"
+      when: "When the decision changes how the system is split into parts or how parts depend on each other"
+    data:
+      description: "Data model, storage, migration and data ownership"
+      when: "When the decision changes what data is stored, where, or in which shape"
+    security:
+      description: "Authentication, authorisation, secrets and data protection"
+      when: "When the decision affects who can access what or how sensitive data is protected"
+    integration:
+      description: "Connections to external systems and identity providers"
+      when: "When the decision changes how the system talks to a system outside it"
+    api:
+      description: "Contracts others build on: endpoints, events and formats"
+      when: "When the decision changes a contract that a client or another service depends on"
+    infrastructure:
+      description: "Hosting, operations, deployment environments and observability"
+      when: "When the decision changes where or how the system runs or is monitored"
+  procedure:
+    development:
+      description: "Building features: scope, review and linting"
+      when: "When the procedure describes how code or documentation is written, reviewed or checked before merge"
+    release:
+      description: "Releasing and deploying, including hotfixes"
+      when: "When the procedure describes how a version is released, deployed or hotfixed"
+    quality:
+      description: "Bug hunting and testing"
+      when: "When the procedure describes how defects are found or how quality is tested"
+    triage:
+      description: "Handling incoming defects and requests"
+      when: "When the procedure describes how a new defect or request is assessed and routed"
+    collaboration:
+      description: "Delegation and handover between people and agents"
+      when: "When the procedure describes how work is delegated or handed over"
+  techstack:
+    language-runtime:
+      description: "Programming languages and their runtimes"
+      when: "When the component is a language or the runtime code executes on, such as Node.js or a JDK"
+    framework:
+      description: "Application frameworks that shape the code structure"
+      when: "When the component dictates how the application is structured, such as React or Spring Boot"
+    library:
+      description: "Runtime libraries used by the code"
+      when: "When the component is a package the application imports and ships with"
+    tooling:
+      description: "Development tools: build, test, lint and formatting"
+      when: "When the component is used while developing or building, but does not ship with the application"
+    ci:
+      description: "CI/CD building blocks such as GitHub Actions and container base images"
+      when: "When the component runs in a pipeline or is the base image a build starts from"
+    service:
+      description: "External services and SaaS"
+      when: "When the component is a hosted service the system or team uses, not a package"
