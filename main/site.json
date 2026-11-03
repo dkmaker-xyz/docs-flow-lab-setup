@@ -3,7 +3,26 @@
  "ref": "main",
  "kind": "branch",
  "repository": "dkmaker-xyz/docs-flow-lab-setup",
- "sourceSha": "f0fe6c8f6c8dba88fae31ec7fdd7161c7583e342",
- "generatedAt": "2026-11-03T08:35:58.000Z",
- "documents": []
+ "sourceSha": "0a73c6d96381440180ccbe103ee9719ca61dd957",
+ "generatedAt": "2026-11-03T08:41:16.000Z",
+ "documents": [
+  {
+   "id": "ADR-0001",
+   "type": "adr",
+   "title": "Store documents as Markdown",
+   "state": "accepted",
+   "page": "docs/adr/0001-store-documents-as-markdown.html",
+   "intent": "Where documents live; test of SETUP.md.",
+   "date": "2026-11-03T09:39:21+01:00"
+  },
+  {
+   "id": "TECH-0001",
+   "type": "techstack",
+   "title": "Node.js",
+   "state": "accepted",
+   "page": "docs/techstack/0001-node-js.html",
+   "intent": "Approved Node.js runtime; test of SETUP.md.",
+   "date": "2026-11-03T09:39:37+01:00"
+  }
+ ]
 }
