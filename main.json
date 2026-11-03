@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "branch": "main",
-  "sourceSha": "0a73c6d96381440180ccbe103ee9719ca61dd957",
-  "generatedAt": "2026-11-03T08:41:43.342Z",
+  "sourceSha": "24b210234bebf43f43518e7f998fc236b1484f3a",
+  "generatedAt": "2026-11-03T08:49:21.863Z",
   "base": null,
   "documents": [
     {
@@ -14,21 +14,65 @@
       "description": "Documents are Markdown files with frontmatter.",
       "intent": "Where documents live; test of SETUP.md.",
       "when": "Phase 12 test only.",
-      "state": "accepted",
+      "state": "superseded",
       "category": "data",
       "featured": false,
       "placeholder": false,
       "pending": false,
       "relations": {
         "outgoing": [],
+        "incoming": [
+          {
+            "type": "supersedes",
+            "source": "ADR-0002",
+            "why": "frontmatter adds a checked schema"
+          }
+        ]
+      },
+      "releases": [
+        "main"
+      ],
+      "commit": {
+        "sha": "24b210234bebf43f43518e7f998fc236b1484f3a",
+        "date": "2026-11-03T08:49:08Z"
+      },
+      "mergedBy": "dkmaker"
+    },
+    {
+      "id": "ADR-0002",
+      "type": "adr",
+      "path": "docs/adr/0002-store-documents-as-markdown-with-checked-frontmatter.md",
+      "slug": "store-documents-as-markdown-with-checked-frontmatter",
+      "title": "Store documents as Markdown with checked frontmatter",
+      "description": "Markdown documents with schema-checked frontmatter.",
+      "intent": "Replaces ADR-0001: documents carry checked frontmatter.",
+      "when": "Phase 12 test only.",
+      "state": "accepted",
+      "category": "data",
+      "featured": false,
+      "placeholder": false,
+      "pending": false,
+      "relations": {
+        "outgoing": [
+          {
+            "type": "supersedes",
+            "target": "ADR-0001",
+            "why": "frontmatter adds a checked schema"
+          },
+          {
+            "type": "uses",
+            "target": "TECH-0001",
+            "why": "the validator runs on Node.js"
+          }
+        ],
         "incoming": []
       },
       "releases": [
         "main"
       ],
       "commit": {
-        "sha": "7bf33bbf7a556d92038dbba6b385feed4c5be7c2",
-        "date": "2026-11-03T09:39:21+01:00"
+        "sha": "96649882e1ff516f969560edef3756e2c09d61fa",
+        "date": "2026-11-03T09:47:22+01:00"
       },
       "mergedBy": "dkmaker"
     },
@@ -48,14 +92,20 @@
       "pending": false,
       "relations": {
         "outgoing": [],
-        "incoming": []
+        "incoming": [
+          {
+            "type": "uses",
+            "source": "ADR-0002",
+            "why": "the validator runs on Node.js"
+          }
+        ]
       },
       "releases": [
         "main"
       ],
       "commit": {
-        "sha": "445b69c9bde50050e034e52bd2802f0721d3d148",
-        "date": "2026-11-03T09:39:37+01:00"
+        "sha": "24b210234bebf43f43518e7f998fc236b1484f3a",
+        "date": "2026-11-03T08:49:08Z"
       },
       "mergedBy": "dkmaker"
     }
