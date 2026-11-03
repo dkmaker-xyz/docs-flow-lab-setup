@@ -3,17 +3,26 @@
  "ref": "main",
  "kind": "branch",
  "repository": "dkmaker-xyz/docs-flow-lab-setup",
- "sourceSha": "0a73c6d96381440180ccbe103ee9719ca61dd957",
- "generatedAt": "2026-11-03T08:41:16.000Z",
+ "sourceSha": "24b210234bebf43f43518e7f998fc236b1484f3a",
+ "generatedAt": "2026-11-03T08:49:08.000Z",
  "documents": [
   {
    "id": "ADR-0001",
    "type": "adr",
    "title": "Store documents as Markdown",
-   "state": "accepted",
+   "state": "superseded",
    "page": "docs/adr/0001-store-documents-as-markdown.html",
    "intent": "Where documents live; test of SETUP.md.",
-   "date": "2026-11-03T09:39:21+01:00"
+   "date": "2026-11-03T08:49:08Z"
+  },
+  {
+   "id": "ADR-0002",
+   "type": "adr",
+   "title": "Store documents as Markdown with checked frontmatter",
+   "state": "accepted",
+   "page": "docs/adr/0002-store-documents-as-markdown-with-checked-frontmatter.html",
+   "intent": "Replaces ADR-0001: documents carry checked frontmatter.",
+   "date": "2026-11-03T09:47:22+01:00"
   },
   {
    "id": "TECH-0001",
@@ -22,7 +31,7 @@
    "state": "accepted",
    "page": "docs/techstack/0001-node-js.html",
    "intent": "Approved Node.js runtime; test of SETUP.md.",
-   "date": "2026-11-03T09:39:37+01:00"
+   "date": "2026-11-03T08:49:08Z"
   }
  ]
 }

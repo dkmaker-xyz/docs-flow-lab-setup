@@ -1,0 +1,23 @@
+<article class="doc" data-id="ADR-0002">
+<p class="meta"><span class="badge s-accepted">accepted</span> · <span class="id">ADR-0002</span> · Architecture decision · data · updated 2026-11-03</p>
+<h1>Store documents as Markdown with checked frontmatter</h1>
+<p class="intent">Replaces ADR-0001: documents carry checked frontmatter.</p>
+<nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul>
+<li class="d2"><a href="#context">Context</a></li>
+<li class="d2"><a href="#decision">Decision</a></li>
+<li class="d2"><a href="#consequences">Consequences</a></li>
+</ul></nav>
+<div class="body"><h2 id="context">Context</h2>
+<p>Markdown alone (ADR-0001) does not give the documents a schema.</p>
+<h2 id="decision">Decision</h2>
+<p>Documents are Markdown with YAML frontmatter that the validator checks (<a href="./0001-store-documents-as-markdown.html">ADR-0001</a>), on the approved runtime (<a href="../techstack/0001-node-js.html">TECH-0001</a>).</p>
+<h2 id="consequences">Consequences</h2>
+<p>The validate check fails documents with bad frontmatter.</p>
+</div>
+<section class="relations"><h2 id="relations">Relations</h2>
+<h3>Outgoing</h3><ul>
+<li><span class="rtype">supersedes</span> <a href="0001-store-documents-as-markdown.html">ADR-0001</a> Store documents as Markdown<span class="why">frontmatter adds a checked schema</span></li>
+<li><span class="rtype">uses</span> <a href="../techstack/0001-node-js.html">TECH-0001</a> Node.js<span class="why">the validator runs on Node.js</span></li>
+</ul>
+</section>
+</article>
